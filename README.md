@@ -1,4 +1,4 @@
-# DNS Benchmark (Python)
+# DNS Benchmark
 
 Benchmarks DNS resolvers for speed and reliability. It sends raw DNS queries
 over UDP and needs nothing but Python 3.8+ — no packages to install.
