@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-DNS Benchmark GUI — dark-themed dashboard for the GRC-style DNS benchmark.
+DNS Benchmark GUI — dark-themed dashboard for the DNS benchmark.
 
 Wraps dns_benchmark.py's core (raw UDP DNS, zero third-party deps) with:
   * live results table (sortable — click any column heading)

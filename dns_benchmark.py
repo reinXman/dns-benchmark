@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-DNS Benchmark — inspired by GRC's DNS Benchmark (https://www.grc.com/dns/benchmark.htm)
+DNS Benchmark — compares DNS resolvers for speed and reliability.
 
 Tests DNS resolvers for:
   1. Cached lookup time   (popular domains — resolver's cache speed)
@@ -100,7 +100,7 @@ POPULAR_DOMAINS = [
     "google.com", "youtube.com", "facebook.com", "amazon.com", "wikipedia.org",
     "twitter.com", "instagram.com", "reddit.com", "netflix.com", "microsoft.com",
     "apple.com", "github.com", "stackoverflow.com", "linkedin.com", "ebay.com",
-    "bing.com", "grc.com", "cloudflare.com", "adobe.com", "spotify.com",
+    "bing.com", "office.com", "cloudflare.com", "adobe.com", "spotify.com",
     "yahoo.com", "zoom.us", "twitch.tv", "dropbox.com", "paypal.com",
 ]
 
@@ -271,7 +271,7 @@ def print_results(results: list, sort_key: str):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="DNS Benchmark (GRC-style)")
+    ap = argparse.ArgumentParser(description="DNS resolver benchmark")
     ap.add_argument("--servers", nargs="*", help="IP addresses of DNS servers to test")
     ap.add_argument("--system", action="store_true", help="also test system resolver(s)")
     ap.add_argument("--samples", type=int, default=40, help="queries per phase per server (default 40)")
