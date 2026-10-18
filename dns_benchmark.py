@@ -272,7 +272,11 @@ def print_results(results: list, sort_key: str):
 
 def main():
     ap = argparse.ArgumentParser(description="DNS resolver benchmark")
-    ap.add_argument("--servers", nargs="*", help="IP addresses of DNS servers to test")
+    ap.add_argument("--servers", nargs="*", help="IP addresses of DNS servers to test "
+                                                 "(replaces the built-in list)")
+    ap.add_argument("--custom", nargs="*", default=[], metavar="IP",
+                    help="extra resolvers to test alongside the built-in list "
+                         "(IPs or hostnames)")
     ap.add_argument("--system", action="store_true", help="also test system resolver(s)")
     ap.add_argument("--samples", type=int, default=40, help="queries per phase per server (default 40)")
     ap.add_argument("--timeout", type=float, default=2.0, help="per-query timeout in seconds")
@@ -300,6 +304,21 @@ def main():
             for ip in ips:
                 servers.append(ip)
                 labels[ip] = name
+
+    if args.custom:
+        for entry in args.custom:
+            if is_ip(entry):
+                ip, label = entry, entry
+            else:
+                try:
+                    ip = socket.getaddrinfo(entry, None, socket.AF_INET)[0][4][0]
+                except OSError:
+                    print(f"Cannot resolve: {entry}", file=sys.stderr)
+                    sys.exit(1)
+                label = entry
+            if ip not in servers:
+                servers.append(ip)
+                labels[ip] = label
 
     if args.system or not args.servers:
         for ip in get_system_resolvers():

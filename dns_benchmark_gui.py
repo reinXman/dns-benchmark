@@ -17,6 +17,8 @@ import argparse
 import csv
 import ctypes
 import queue
+import re
+import socket
 import threading
 import time
 import tkinter as tk
@@ -77,7 +79,24 @@ def score_of(r: dict) -> float:
 # Server list + worker thread
 # ---------------------------------------------------------------------------
 
-def build_server_list(include_system: bool):
+def parse_custom(text: str) -> list[tuple[str, str]]:
+    """Parse a comma/space-separated list of IPs or hostnames -> [(ip, label)]."""
+    entries = []
+    for tok in re.split(r"[,\s]+", (text or "").strip()):
+        if not tok:
+            continue
+        if is_ip(tok):
+            entries.append((tok, f"{tok} (custom)"))
+            continue
+        try:
+            ip = socket.getaddrinfo(tok, None, socket.AF_INET)[0][4][0]
+        except OSError:
+            raise ValueError(f"cannot resolve: {tok}")
+        entries.append((ip, f"{tok} (custom)"))
+    return entries
+
+
+def build_server_list(include_system: bool, custom: str = ""):
     servers, labels = [], {}
     for name, ips in KNOWN_SERVERS.items():
         for ip in ips:
@@ -88,14 +107,19 @@ def build_server_list(include_system: bool):
             if ip not in servers:
                 servers.append(ip)
                 labels[ip] = f"{ip} (system)"
+    for ip, label in parse_custom(custom):
+        if ip not in servers:
+            servers.append(ip)
+            labels[ip] = label
     return servers, labels
 
 
 def run_benchmark(q: queue.Queue, stop: threading.Event,
-                  include_system: bool, samples: int, timeout: float, workers: int):
+                  include_system: bool, custom: str,
+                  samples: int, timeout: float, workers: int):
     """Worker thread: pushes ('setup'…), ('progress'…), ('result'…), ('done'…)."""
     try:
-        servers, labels = build_server_list(include_system)
+        servers, labels = build_server_list(include_system, custom)
         if not servers:
             q.put(("error", "No DNS servers to test."))
             return
@@ -296,6 +320,14 @@ class Dashboard(tk.Tk):
                        selectcolor=CARD, relief="flat", highlightthickness=0,
                        font=self.fonts["small"]).pack(side="left", padx=(0, 14))
 
+        self._ctl_label(row, "Custom DNS:").pack(side="left")
+        self.custom_dns = tk.Entry(row, width=24, bg=CARD, fg=TEXT,
+                                   insertbackground=TEXT, relief="flat",
+                                   font=self.fonts["small"])
+        self.custom_dns.insert(0, getattr(self.opts, "custom", "") or "")
+        self.custom_dns.pack(side="left", padx=(4, 14), ipady=2)
+        self.custom_dns.bind("<Return>", lambda e: self._toggle_run())
+
         self.run_btn = tk.Button(row, text="▶  Run benchmark", command=self._toggle_run,
                                  bg="#1f3a2a", fg=GREEN, activebackground=BORDER,
                                  activeforeground=TEXT, relief="flat", padx=14,
@@ -421,6 +453,7 @@ class Dashboard(tk.Tk):
         self.worker = threading.Thread(target=run_benchmark, daemon=True,
                                        args=(self.q, self.stop_event,
                                              self.include_system.get(),
+                                             self.custom_dns.get().strip(),
                                              samples, timeout, 10))
         self.worker.start()
 
@@ -567,6 +600,9 @@ def main():
     ap = argparse.ArgumentParser(description="DNS Benchmark GUI")
     ap.add_argument("--samples", type=int, default=40)
     ap.add_argument("--timeout", type=float, default=2.0)
+    ap.add_argument("--custom", default="",
+                    help="extra DNS servers to test (IPs or hostnames, "
+                         "comma/space separated) — pre-fills the Custom DNS field")
     ap.add_argument("--auto", action="store_true", help="start benchmark on launch")
     opts = ap.parse_args()
     Dashboard(opts).mainloop()

@@ -35,7 +35,8 @@ A dark-themed dashboard wrapping the same benchmark core (same look as
 - Unreachable resolvers are flagged quickly (the warm-up probe doubles as a
   reachability check) — e.g. when a VPN or firewall blocks outbound UDP/53
 
-GUI options: `--samples N`, `--timeout T`, `--auto` (start benchmarking on launch).
+GUI options: `--samples N`, `--timeout T`, `--custom "1.1.1.1 dns.google"`
+(pre-fills the Custom DNS field), `--auto` (start benchmarking on launch).
 
 ## Usage
 
@@ -51,7 +52,8 @@ python dns_benchmark.py --sort uncached        # rank by a specific column
 
 | Flag | Default | Description |
 |---|---|---|
-| `--servers IP ...` | built-in list | IP addresses of resolvers to test |
+| `--servers IP ...` | built-in list | IP addresses of resolvers to test (replaces the built-in list) |
+| `--custom IP ...` | none | Extra resolvers to test alongside the built-in list (IPs or hostnames) |
 | `--system` | off | Also test the resolver(s) configured on this machine |
 | `--samples N` | 40 | Queries per phase per server (use fewer for a quick test) |
 | `--timeout SEC` | 2.0 | Per-query timeout |
